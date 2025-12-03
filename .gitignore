@@ -1,0 +1,12 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env.*
+
+
+assortment-planner-agent/.idea/*
+inventory_agent/.idea/*
+po_agent/.idea/*
+procurement_supplier_negotiation_agent/.idea/*

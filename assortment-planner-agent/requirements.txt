@@ -1,0 +1,8 @@
+google-adk
+fastapi
+uvicorn[standard]
+litellm
+langfuse
+python-dotenv
+pydantic
+
