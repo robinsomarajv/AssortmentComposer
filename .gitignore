@@ -10,3 +10,4 @@ assortment-planner-agent/.idea/*
 inventory_agent/.idea/*
 po_agent/.idea/*
 procurement_supplier_negotiation_agent/.idea/*
+*.idea
