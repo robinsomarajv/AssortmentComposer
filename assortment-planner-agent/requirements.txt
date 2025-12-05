@@ -5,4 +5,5 @@ litellm
 langfuse
 python-dotenv
 pydantic
+httpx
 
