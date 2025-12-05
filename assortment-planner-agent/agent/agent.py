@@ -1,4 +1,4 @@
-from google.adk.agent import LlmAgent
+from google.adk.agents import LlmAgent
 from services.runtime import llm_completion
 from tools.retail_tools import all_tools
 

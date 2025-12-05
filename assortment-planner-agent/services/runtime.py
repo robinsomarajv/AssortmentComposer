@@ -1,9 +1,9 @@
+from typing import Optional, Any
 import litellm
 from langfuse import Langfuse
-from google.adk.runner import Runner, InMemorySessionService
+from google.adk.runners import Runner, InMemorySessionService
 from config import settings
 from services.prompts import get_system_prompt
-import os
 
 langfuse = Langfuse(
     public_key=settings.LANGFUSE_PUBLIC_KEY,
@@ -21,21 +21,24 @@ def create_runner(agent):
         runner = Runner(agent=agent, session_service=session_service)
     return runner
 
-def get_api_key_for_model(model: str) -> str:
+def get_api_key_for_model(model: Optional[str] = None) -> str:
     """
-    Returns the correct API key for the given model/provider from environment variables.
-    Extend this mapping as needed for more providers/models.
+    Returns the correct API key for the given model/provider using values from `settings`.
     """
-    model = model.lower()
-    if model.startswith("gpt-") or model.startswith("openai"):
-        return os.getenv("OPENAI_API_KEY", "")
-    elif model.startswith("claude") or model.startswith("anthropic"):
-        return os.getenv("ANTHROPIC_API_KEY", "")
-    elif model.startswith("gemini") or model.startswith("google"):
-        return os.getenv("GOOGLE_API_KEY", "")
-    elif model.startswith("mistral"):
-        return os.getenv("MISTRAL_API_KEY", "")
-    # Add more providers as needed
+    m = (model or settings.LLM_MODEL or "").lower()
+    # OpenAI / GPT family
+    if m.startswith("gpt-") or "openai" in m:
+        return settings.OPENAI_API_KEY or ""
+    # Anthropic / Claude
+    if m.startswith("claude") or "anthropic" in m:
+        return settings.ANTHROPIC_API_KEY or ""
+    # Google / Gemini
+    if "gemini" in m or "google" in m:
+        return settings.GOOGLE_API_KEY or ""
+    # Mistral
+    if "mistral" in m:
+        return settings.MISTRAL_API_KEY or ""
+    # default: no key
     return ""
 
 async def llm_completion(messages, stream=False, model=None):
@@ -54,16 +57,16 @@ async def llm_completion(messages, stream=False, model=None):
 
 async def call_with_session(message, session_id=None, model=None):
     from agent.agent import root_agent
-    create_runner(root_agent)
-    result = await runner.run(message, session_id=session_id, model=model)
+    r: Any = create_runner(root_agent)
+    result: Any = await r.run(message, session_id=session_id, model=model)  # type: ignore
     return {
-        "reply": result.reply,
-        "session_id": result.session_id,
+        "reply": getattr(result, "reply", None),
+        "session_id": getattr(result, "session_id", None),
         "plan_result": getattr(result, "plan_result", None)
     }
 
 async def stream_llm_tokens(message, session_id=None):
     from agent.agent import root_agent
-    create_runner(root_agent)
-    async for token in runner.stream(message, session_id=session_id):
+    r: Any = create_runner(root_agent)
+    async for token in r.stream(message, session_id=session_id):  # type: ignore
         yield token

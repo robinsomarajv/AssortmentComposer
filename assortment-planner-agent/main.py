@@ -16,3 +16,4 @@ A2A_MOUNTED = mount_a2a(app)
 @app.get("/.well-known/agent-card")
 async def wellknown_agent_card(request: Request):
     return await agent_card(request, a2a_mounted=A2A_MOUNTED)
+

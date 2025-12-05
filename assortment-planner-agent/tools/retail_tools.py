@@ -1,5 +1,5 @@
-from google.adk.agent import Tool
-from google.adk.a2a import RemoteA2aAgent
+from google.adk.tools import Tool
+from google.adk.agents import remote_a2a_agent
 from config import settings
 
 # Domain tool stubs
@@ -19,7 +19,7 @@ async def fetch_shelf_constraints(*args, **kwargs):
     raise NotImplementedError("fetch_shelf_constraints not implemented")
 
 # Remote agent wrappers
-inventory_client = RemoteA2aAgent(agent_card_url=settings.INVENTORY_AGENT_CARD_URL)
+inventory_client = remote_a2a_agent(agent_card_url=settings.INVENTORY_AGENT_CARD_URL)
 procurement_client = RemoteA2aAgent(agent_card_url=settings.PROCUREMENT_AGENT_CARD_URL)
 po_client = RemoteA2aAgent(agent_card_url=settings.PO_AGENT_CARD_URL)
 
