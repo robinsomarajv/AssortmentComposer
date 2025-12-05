@@ -20,7 +20,7 @@ async def agent_card(request: Request, a2a_mounted: bool):
             },
             "a2a": {
                 "mounted": a2a_mounted,
-                "base_path": "/a2a",
+                "base_path": "/a2a", 
                 "invoke": "/a2a/invoke",
                 "stream": "/a2a/stream",
                 "metadata": "/a2a/metadata",
