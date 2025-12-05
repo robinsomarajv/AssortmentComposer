@@ -9,7 +9,8 @@ async def chat(request: Request):
     data = await request.json()
     message = data.get("message")
     session_id = data.get("session_id")
-    result = await call_with_session(message, session_id)
+    model = data.get("model")
+    result = await call_with_session(message, session_id, model)
     return JSONResponse(result)
 
 @router.get("/chat/stream")
@@ -17,6 +18,7 @@ async def chat_stream(request: Request):
     data = dict(request.query_params)
     message = data.get("message")
     session_id = data.get("session_id")
+    model = data.get("model")
     async def event_generator():
         async for token in stream_llm_tokens(message, session_id):
             yield f"data: {token}\n\n"
@@ -28,6 +30,8 @@ async def chat_ws(websocket: WebSocket):
     data = await websocket.receive_json()
     message = data.get("message")
     session_id = data.get("session_id")
+    model = data.get("model")
+    # For streaming, model selection is not yet propagated, but can be added to stream_llm_tokens if needed
     async for token in stream_llm_tokens(message, session_id):
         await websocket.send_text(token)
     await websocket.close()

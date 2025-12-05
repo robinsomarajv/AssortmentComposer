@@ -20,21 +20,22 @@ def create_runner(agent):
         runner = Runner(agent=agent, session_service=session_service)
     return runner
 
-async def llm_completion(messages, stream=False):
+async def llm_completion(messages, stream=False, model=None):
     system_prompt = await get_system_prompt("assortment_planner_system")
     messages = [{"role": "system", "content": system_prompt}] + messages
+    model = model or settings.LLM_MODEL
     response = await litellm.acompletion(
-        model=settings.LLM_MODEL,
+        model=model,
         messages=messages,
         stream=stream,
         callbacks=[langfuse]
     )
     return response
 
-async def call_with_session(message, session_id=None):
+async def call_with_session(message, session_id=None, model=None):
     from agent.agent import root_agent
     create_runner(root_agent)
-    result = await runner.run(message, session_id=session_id)
+    result = await runner.run(message, session_id=session_id, model=model)
     return {
         "reply": result.reply,
         "session_id": result.session_id,
