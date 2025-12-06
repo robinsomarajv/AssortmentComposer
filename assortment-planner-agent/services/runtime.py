@@ -1,62 +1,77 @@
+# services/runtime.py
+import uuid
 from typing import Optional, Any
-import litellm
 from google.adk.runners import Runner, InMemorySessionService
+from google.genai import types
 from config import settings
-from services.prompts import get_system_prompt
+
+# --- Import the top-level 'agent' module ---
+import agent
 
 runner = None
 session_service = None
 
-def create_runner(agent):
+def create_runner():
+    """
+    Creates and configures the ADK Runner instance without needing arguments.
+    """
     global runner, session_service
     if runner is None:
         session_service = InMemorySessionService()
-        runner = Runner(agent=agent, session_service=session_service, app_name='AssortmentPlannerAgent-101',)
+        runner = Runner(
+            agent=agent.assrtmnt_agent,
+            session_service=session_service,
+            app_name='agents',
+        )
     return runner
 
-def get_api_key_for_model(model: Optional[str] = None) -> str:
-    """
-    Returns the correct API key for the given model/provider using values from `settings`.
-    """
-    m = (model or settings.LLM_MODEL or "").lower()
-    # OpenAI / GPT family
-    if m.startswith("gpt-") or "openai" in m:
-        return settings.OPENAI_API_KEY or ""
-    # Anthropic / Claude
-    if m.startswith("claude") or "anthropic" in m:
-        return settings.ANTHROPIC_API_KEY or ""
-    # Google / Gemini
-    if "gemini" in m or "google" in m:
-        return settings.GOOGLE_API_KEY or ""
-    # Mistral
-    if "mistral" in m:
-        return settings.MISTRAL_API_KEY or ""
-    # default: no key
-    return ""
+# ... (keep get_api_key_for_model function as is) ...
 
-async def call_with_session(message, session_id=None, model=None):
-    from agent.agent import root_agent
-    r: Any = create_runner(root_agent)
-    result: Any = await r.run(message, session_id=session_id, model=model)  # type: ignore
+async def call_with_session(message, ssid=None, model=None):
+
+    r: Runner = create_runner()
+    target_session_id_str = ssid if ssid is not None else str(uuid.uuid4())
+
+    # Create the session object in the service
+    session_obj = await r.session_service.create_session(
+        app_name='agents',
+        user_id='u101',
+        session_id=target_session_id_str  # Pass the string ID here during creation
+    )
+
+    # *** FIX IS HERE ***
+    # Extract the actual string ID from the returned session object for the runner method
+    effective_session_id_str = session_obj.id
+    event_generator = r.run_async(
+        new_message=types.Content(parts=[types.Part(text=message)], role="user"),
+        user_id='u101',
+        session_id=effective_session_id_str,
+        # model=model # This argument may still cause an error, remove if needed
+    )
+    # ... rest of call_with_session ...
+    final_reply_content = ""
+    async for event in event_generator:
+        if event.content and event.content.parts:
+            for part in event.content.parts:
+                if part.text:
+                    final_reply_content += part.text
+
     return {
-        "reply": getattr(result, "reply", None),
-        "session_id": getattr(result, "session_id", None),
-        "plan_result": getattr(result, "plan_result", None)
+        "reply": final_reply_content,
+        "session_id": effective_session_id_str,
+        "plan_result": None
     }
 
 async def stream_llm_tokens(message, session_id=None):
-    from agent.agent import root_agent
-    r: Any = create_runner(root_agent)
+    # --- FIX: Call create_runner() with no arguments now ---
+    r: Any = create_runner()
     result_generator = await r.run(
         message,
         session_id=session_id,
         model=settings.LLM_MODEL,
         stream=True  # <--- Pass the stream flag to the run method
     )  # type: ignore
-
-    # Iterate over the generator returned by r.run()
+    # ... rest of stream_llm_tokens ...
     async for token in result_generator:
-        # The token received is likely a chunk object; we extract the text content
-        # You might need to adjust 'token.content.parts[0].text' based on the exact
-        # structure returned by your ADK version if this doesn't work perfectly.
         yield token.content.parts[0].text
+

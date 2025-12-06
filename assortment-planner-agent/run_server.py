@@ -39,7 +39,7 @@ import sys
 # Ensure sys.argv is clean for uvicorn's parser
 sys.argv = [
     "uvicorn",
-    "main:app",
+    "main:agentic_assrtmnt",
     "--host", "0.0.0.0",
     "--port", "8080"
 ]

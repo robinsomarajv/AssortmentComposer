@@ -10,7 +10,7 @@ from google.adk.agents import LlmAgent
 from config import settings
 from tools.retail_tools import all_tools
 
-root_agent = LlmAgent(
+assrtmnt_agent = LlmAgent(
     name="assortment_planner_agent",
     description="Orchestrates Inventory, Procurement, and PO agents over A2A.",
     model=settings.LLM_MODEL,
@@ -38,4 +38,4 @@ my_agent_card = AgentCard(
     skills=[invoke_skill] # Pass the Pydantic Skill object
 )
 
-a2a_app = to_a2a(root_agent, agent_card=my_agent_card)
+a2a_app = to_a2a(assrtmnt_agent, agent_card=my_agent_card)
