@@ -1,4 +1,4 @@
-google-adk
+google-adk[a2a]
 fastapi
 uvicorn[standard]
 litellm
@@ -6,4 +6,5 @@ langfuse
 python-dotenv
 pydantic
 httpx
-
+python-a2a
+a2a-sdk
