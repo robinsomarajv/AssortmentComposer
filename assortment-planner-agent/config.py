@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     PUBLIC_BASE_URL: str = ""
     ASSORTMENT_PORT: int = 8000
     APP_NAME: str = "assortment-planner"
+    AGENT_BASE_URL:str
 
     # added API key fields
     OPENAI_API_KEY: str | None = None

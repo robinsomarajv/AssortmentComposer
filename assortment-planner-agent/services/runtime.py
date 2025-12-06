@@ -1,15 +1,8 @@
 from typing import Optional, Any
 import litellm
-from langfuse import Langfuse
 from google.adk.runners import Runner, InMemorySessionService
 from config import settings
 from services.prompts import get_system_prompt
-
-langfuse = Langfuse(
-    public_key=settings.LANGFUSE_PUBLIC_KEY,
-    secret_key=settings.LANGFUSE_SECRET_KEY,
-    host=settings.LANGFUSE_HOST
-)
 
 runner = None
 session_service = None
@@ -18,7 +11,7 @@ def create_runner(agent):
     global runner, session_service
     if runner is None:
         session_service = InMemorySessionService()
-        runner = Runner(agent=agent, session_service=session_service)
+        runner = Runner(agent=agent, session_service=session_service, app_name='AssortmentPlannerAgent-101',)
     return runner
 
 def get_api_key_for_model(model: Optional[str] = None) -> str:
@@ -41,20 +34,6 @@ def get_api_key_for_model(model: Optional[str] = None) -> str:
     # default: no key
     return ""
 
-async def llm_completion(messages, stream=False, model=None):
-    system_prompt = await get_system_prompt("assortment_planner_system")
-    messages = [{"role": "system", "content": system_prompt}] + messages
-    model = model or settings.LLM_MODEL
-    api_key = get_api_key_for_model(model)
-    response = await litellm.acompletion(
-        model=model,
-        messages=messages,
-        stream=stream,
-        api_key=api_key,
-        callbacks=[langfuse]
-    )
-    return response
-
 async def call_with_session(message, session_id=None, model=None):
     from agent.agent import root_agent
     r: Any = create_runner(root_agent)
@@ -68,5 +47,16 @@ async def call_with_session(message, session_id=None, model=None):
 async def stream_llm_tokens(message, session_id=None):
     from agent.agent import root_agent
     r: Any = create_runner(root_agent)
-    async for token in r.stream(message, session_id=session_id):  # type: ignore
-        yield token
+    result_generator = await r.run(
+        message,
+        session_id=session_id,
+        model=settings.LLM_MODEL,
+        stream=True  # <--- Pass the stream flag to the run method
+    )  # type: ignore
+
+    # Iterate over the generator returned by r.run()
+    async for token in result_generator:
+        # The token received is likely a chunk object; we extract the text content
+        # You might need to adjust 'token.content.parts[0].text' based on the exact
+        # structure returned by your ADK version if this doesn't work perfectly.
+        yield token.content.parts[0].text

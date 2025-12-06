@@ -8,4 +8,4 @@ app = FastAPI(title="Assortment Planner Agent - fast api")
 # Mount human endpoints
 app.include_router(http_router)
 #mounting the A2A endpoints
-app.mount('/a2a', a2a_app)
+a2a_app.mount('/app', app)

@@ -1,10 +1,18 @@
-google-adk[a2a]
-fastapi
+# Core Web Server and Framework
+fastapi>=0.100.0
 uvicorn[standard]
+
+# AI/Agentic Functionality (includes most necessary sub-dependencies)
+google-adk[a2a]
 litellm
 langfuse
+
+# OpenTelemetry for automatic tracing
+opentelemetry-api
+opentelemetry-sdk
+opentelemetry-exporter-otlp
+
+# Utility Libraries
 python-dotenv
 pydantic
 httpx
-python-a2a
-a2a-sdk
